@@ -23,12 +23,16 @@ export const MatchLoadedEvent = z.object({
   matchId: z.string(),
 });
 
+// RaceInputEvent: matchId OR roomId (둘 중 하나 필수)
 export const RaceInputEvent = z.object({
   type: z.literal("race.input"),
-  matchId: z.string(),
+  matchId: z.string().optional(),
+  roomId: z.string().optional(),
   seq: z.number().int().nonnegative(),
   kind: z.enum(["type", "backspace"]),
   value: z.string().max(1).optional(), // 단일 문자 (kind="type" 시에만)
+}).refine((e) => e.matchId || e.roomId, {
+  message: "Either matchId or roomId is required",
 });
 
 export const RaceLeaveEvent = z.object({
@@ -42,7 +46,26 @@ export const PingEvent = z.object({
   clientTs: z.number(),
 });
 
-export const ClientEvent = z.discriminatedUnion("type", [
+export const RoomCreateEvent = z.object({
+  type: z.literal("room.create"),
+});
+
+export const RoomJoinEvent = z.object({
+  type: z.literal("room.join"),
+  roomCode: z.string().min(6).max(6),
+});
+
+export const RoomReadyEvent = z.object({
+  type: z.literal("room.ready"),
+  roomId: z.string(),
+});
+
+export const RoomStartEvent = z.object({
+  type: z.literal("room.start"),
+  roomId: z.string(),
+});
+
+export const ClientEvent = z.union([
   SessionAuthEvent,
   QueueJoinEvent,
   QueueLeaveEvent,
@@ -50,6 +73,10 @@ export const ClientEvent = z.discriminatedUnion("type", [
   RaceInputEvent,
   RaceLeaveEvent,
   PingEvent,
+  RoomCreateEvent,
+  RoomJoinEvent,
+  RoomReadyEvent,
+  RoomStartEvent,
 ]);
 export type ClientEvent = z.infer<typeof ClientEvent>;
 
@@ -127,6 +154,71 @@ export interface WsErrorEvent {
   retryable: boolean;
 }
 
+export interface RoomPlayerPublic {
+  participantId: string;
+  nickname: string;
+  ready: boolean;
+  isHost: boolean;
+}
+
+export interface RoomRanking {
+  rank: number;
+  participantId: string;
+  nickname: string;
+  wpm: number;
+  accuracy: number;
+  progress: number;   // 0~1
+  finishMs: number | null;
+}
+
+export interface RoomCreatedEvent {
+  type: "room.created";
+  roomId: string;
+  roomCode: string;
+  promptText: string;
+}
+
+export interface RoomJoinedEvent {
+  type: "room.joined";
+  roomId: string;
+  roomCode: string;
+  promptText: string;
+  hostId: string;
+  myParticipantId: string;
+  players: RoomPlayerPublic[];
+}
+
+export interface RoomStateEvent {
+  type: "room.state";
+  roomId: string;
+  phase: "lobby" | "countdown" | "racing" | "finished";
+  hostId: string;
+  players: RoomPlayerPublic[];
+}
+
+export interface RoomCountdownEvent {
+  type: "room.countdown";
+  roomId: string;
+  serverStartAt: number;
+}
+
+export interface RoomProgressEvent {
+  type: "room.progress";
+  roomId: string;
+  players: Array<{
+    participantId: string;
+    progress: number;
+    wpm: number;
+    accuracy: number;
+  }>;
+}
+
+export interface RoomFinishedEvent {
+  type: "room.finished";
+  roomId: string;
+  rankings: RoomRanking[];
+}
+
 export type ServerEvent =
   | SessionOkEvent
   | QueueStatusEvent
@@ -136,4 +228,10 @@ export type ServerEvent =
   | OpponentPresenceEvent
   | RaceResultEvent
   | PongEvent
-  | WsErrorEvent;
+  | WsErrorEvent
+  | RoomCreatedEvent
+  | RoomJoinedEvent
+  | RoomStateEvent
+  | RoomCountdownEvent
+  | RoomProgressEvent
+  | RoomFinishedEvent;
