@@ -6,6 +6,7 @@ import { config } from "./config";
 import { createConnection, removeConnection } from "./connection-store";
 import { handleMessage } from "./router";
 import { handleDisconnect } from "./handlers/race";
+import { handleRoomDisconnect } from "./rooms/room-race";
 import { sendError } from "./utils";
 
 async function main() {
@@ -43,6 +44,7 @@ async function main() {
     ws.on("close", () => {
       fastify.log.info(`WS disconnected: ${conn.connId}`);
       handleDisconnect(conn);
+      handleRoomDisconnect(conn);
       removeConnection(conn.connId);
     });
 
