@@ -27,7 +27,7 @@ export default function RoomPage() {
   const { data: session, status } = useSession();
   const {
     phase, roomId, roomCode, promptText, hostId, myId,
-    players, raceProgress, rankings, serverStartAt,
+    players, raceProgress, rankings, serverStartAt, retireAt,
     connectAndAuth, joinRoom, toggleReady, startRoom, sendInput, reset,
   } = useRoomStore();
   const {
@@ -135,6 +135,16 @@ export default function RoomPage() {
     return () => clearInterval(id);
   }, [serverStartAt, phase]);
 
+  // Retire 카운트다운 (1등 완주 후 10초)
+  const [retireCountdown, setRetireCountdown] = useState(0);
+  useEffect(() => {
+    if (!retireAt) return;
+    const tick = () => setRetireCountdown(Math.max(0, Math.ceil((retireAt - Date.now()) / 1000)));
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [retireAt]);
+
   if (phase === "idle" || (phase === "countdown" && racePhase !== "racing")) {
     return (
       <div ref={containerRef} tabIndex={-1} className="outline-none">
@@ -170,7 +180,18 @@ export default function RoomPage() {
 
   if ((phase === "racing" || (phase === "countdown" && racePhase === "racing")) && promptText) {
     return (
-      <div ref={containerRef} tabIndex={-1} className="outline-none">
+      <div ref={containerRef} tabIndex={-1} className="outline-none relative">
+        {retireAt && (
+          <div className="fixed inset-0 flex flex-col items-center justify-end pb-16 pointer-events-none z-40">
+            <div className="bg-gray-950/70 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-8 py-4 text-center">
+              <p className="text-gray-300 text-sm mb-1">1st place finished!</p>
+              <p className="text-white font-bold text-2xl">
+                Game ends in{" "}
+                <span className="text-indigo-400">{retireCountdown}s</span>
+              </p>
+            </div>
+          </div>
+        )}
         <RoomRaceView
           myId={myId ?? ""}
           promptText={promptText}

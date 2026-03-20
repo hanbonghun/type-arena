@@ -213,6 +213,12 @@ export interface RoomProgressEvent {
   }>;
 }
 
+export interface RoomRetiringEvent {
+  type: "room.retiring";
+  roomId: string;
+  retireAt: number;  // Unix timestamp ms — 이 시각에 게임 강제 종료
+}
+
 export interface RoomFinishedEvent {
   type: "room.finished";
   roomId: string;
@@ -234,4 +240,5 @@ export type ServerEvent =
   | RoomStateEvent
   | RoomCountdownEvent
   | RoomProgressEvent
+  | RoomRetiringEvent
   | RoomFinishedEvent;

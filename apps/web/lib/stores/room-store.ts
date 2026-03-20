@@ -28,6 +28,7 @@ interface RoomState {
   raceProgress: RoomProgressEntry[];
   rankings: RoomRanking[];
   serverStartAt: number | null;
+  retireAt: number | null;
 
   connectAndAuth: (token: string) => void;
   createRoom: () => void;
@@ -49,6 +50,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   raceProgress: [],
   rankings: [],
   serverStartAt: null,
+  retireAt: null,
 
   connectAndAuth: (token) => {
     wsClient.connect(token);
@@ -95,8 +97,12 @@ export const useRoomStore = create<RoomState>((set, get) => ({
           set({ raceProgress: event.players });
           break;
 
+        case "room.retiring":
+          set({ retireAt: event.retireAt });
+          break;
+
         case "room.finished":
-          set({ phase: "finished", rankings: event.rankings });
+          set({ phase: "finished", rankings: event.rankings, retireAt: null });
           break;
       }
     });
@@ -138,6 +144,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
       raceProgress: [],
       rankings: [],
       serverStartAt: null,
+      retireAt: null,
     });
   },
 }));

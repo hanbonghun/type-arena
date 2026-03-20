@@ -96,11 +96,29 @@ export function handleRoomInput(
     player.rank = finishedCount + 1;
     player.finishedAt = elapsed;
 
-    // 1등 완주 → 게임 즉시 종료
+    // 1등 완주 → 10초 retire 카운트다운 시작
     if (player.rank === 1) {
-      finalizeRoom(room, "completion");
+      startRetireCountdown(room);
     }
   }
+}
+
+const RETIRE_MS = 10_000;
+
+function startRetireCountdown(room: Room): void {
+  // 기존 120초 타임아웃 취소하고 10초 retire 타이머로 교체
+  if (room.raceTimer) clearTimeout(room.raceTimer);
+
+  const retireAt = Date.now() + RETIRE_MS;
+  broadcastToRoom(room, {
+    type: "room.retiring",
+    roomId: room.id,
+    retireAt,
+  });
+
+  room.raceTimer = setTimeout(() => {
+    finalizeRoom(room, "completion");
+  }, RETIRE_MS);
 }
 
 export function handleRoomDisconnect(conn: Connection): void {
