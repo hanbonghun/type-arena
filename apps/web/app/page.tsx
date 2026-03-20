@@ -81,30 +81,24 @@ export default function HomePage() {
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Button
-          className="w-full text-lg py-6"
-          onClick={handlePlayNow}
-          disabled={isLoading}
-        >
+        <Button className="w-full text-lg py-6" onClick={handlePlayNow} disabled={isLoading}>
           {isLoading ? "Loading..." : "Play Now"}
         </Button>
 
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={() => router.push("/room/new")}
+          disabled={isLoading}
+        >
+          Create Room
+        </Button>
+
         {!user && (
-          <Button
-            variant="secondary"
-            className="w-full"
-            onClick={() => signIn("google")}
-          >
+          <Button variant="secondary" className="w-full" onClick={() => signIn("google")}>
             Sign in with Google
           </Button>
         )}
-
-        <Button variant="secondary" disabled className="w-full" title="Coming soon">
-          Create Private Room
-        </Button>
-        <Button variant="ghost" disabled className="w-full" title="Coming soon">
-          Join by Code
-        </Button>
       </div>
     </main>
   );
