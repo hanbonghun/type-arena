@@ -1,0 +1,21 @@
+{
+  "name": "type-arena",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "lint": "turbo lint",
+    "db:push": "pnpm --filter @type-arena/web exec prisma db push",
+    "db:seed": "pnpm --filter @type-arena/web exec prisma db seed",
+    "db:studio": "pnpm --filter @type-arena/web exec prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2",
+    "typescript": "^5.7"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  }
+}
