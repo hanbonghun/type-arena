@@ -55,6 +55,7 @@ export default function RoomPage() {
         let guest = getStoredGuest();
         if (!guest) {
           const res = await fetch("/api/v1/guest-sessions", { method: "POST" });
+          if (!res.ok) { router.replace("/"); return; }
           guest = await res.json() as GuestSession;
           localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(guest));
         }
@@ -70,7 +71,7 @@ export default function RoomPage() {
     if (myId && phase === "idle") {
       joinRoom(params.code.toUpperCase());
     }
-  }, [myId, params.code]);
+  }, [myId, phase, params.code, joinRoom]);
 
   // 프롬프트 초기화
   useEffect(() => {
@@ -98,10 +99,10 @@ export default function RoomPage() {
     if (racePhase !== "racing") return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.ctrlKey || e.metaKey || e.isComposing) return;
-      e.preventDefault();
       const kind = e.key === "Backspace" ? "backspace" : "type";
       const value = kind === "type" ? e.key : undefined;
       if (kind === "type" && value?.length !== 1) return;
+      e.preventDefault();
       seqRef.current += 1;
       sendInput(seqRef.current, kind, value);
       handleKeyPress(e.key);
@@ -112,15 +113,15 @@ export default function RoomPage() {
 
   const isHost = myId === hostId;
 
-  // 카운트다운 오버레이
+  // 카운트다운 오버레이 (countdown phase에서만 실행)
   const [countdown, setCountdown] = useState(0);
   useEffect(() => {
-    if (!serverStartAt) return;
+    if (!serverStartAt || phase !== "countdown") return;
     const tick = () => setCountdown(Math.max(0, Math.ceil((serverStartAt - Date.now()) / 1000)));
     tick();
     const id = setInterval(tick, 200);
     return () => clearInterval(id);
-  }, [serverStartAt]);
+  }, [serverStartAt, phase]);
 
   if (phase === "idle" || (phase === "countdown" && racePhase !== "racing")) {
     return (
@@ -155,7 +156,7 @@ export default function RoomPage() {
     );
   }
 
-  if (phase === "racing" || (phase === "countdown" && racePhase === "racing")) {
+  if ((phase === "racing" || (phase === "countdown" && racePhase === "racing")) && promptText) {
     return (
       <div ref={containerRef} tabIndex={-1} className="outline-none">
         <RoomRaceView

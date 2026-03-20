@@ -42,6 +42,7 @@ export default function RoomNewPage() {
         let guest = getStoredGuest();
         if (!guest) {
           const res = await fetch("/api/v1/guest-sessions", { method: "POST" });
+          if (!res.ok) { router.replace("/"); return; }
           guest = await res.json() as GuestSession;
           localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(guest));
         }
@@ -57,7 +58,7 @@ export default function RoomNewPage() {
     if (myId && phase === "idle") {
       createRoom();
     }
-  }, [myId]);
+  }, [myId, phase, createRoom]);
 
   // 방 생성 완료 → 코드로 이동
   useEffect(() => {
