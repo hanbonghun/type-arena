@@ -48,6 +48,9 @@ importers:
       react-dom:
         specifier: ^19
         version: 19.2.4(react@19.2.4)
+      typescript:
+        specifier: ^5.7
+        version: 5.9.3
       zustand:
         specifier: ^5
         version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
@@ -70,9 +73,6 @@ importers:
       tailwindcss:
         specifier: ^4
         version: 4.2.2
-      typescript:
-        specifier: ^5.7
-        version: 5.9.3
 
   apps/ws-server:
     dependencies:
