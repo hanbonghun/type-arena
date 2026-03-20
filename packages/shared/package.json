@@ -1,0 +1,23 @@
+{
+  "name": "@type-arena/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^3",
+    "typescript": "^5.7"
+  },
+  "dependencies": {
+    "zod": "^3.24"
+  }
+}
