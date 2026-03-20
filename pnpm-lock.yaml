@@ -82,6 +82,9 @@ importers:
       '@type-arena/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      dotenv:
+        specifier: ^17.3.1
+        version: 17.3.1
       fastify:
         specifier: ^4
         version: 4.29.1
@@ -983,6 +986,10 @@ packages:
 
   dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+
+  dotenv@17.3.1:
+    resolution: {integrity: sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA==}
     engines: {node: '>=12'}
 
   ecdsa-sig-formatter@1.0.11:
@@ -2264,6 +2271,8 @@ snapshots:
   detect-libc@2.1.2: {}
 
   dotenv@16.6.1: {}
+
+  dotenv@17.3.1: {}
 
   ecdsa-sig-formatter@1.0.11:
     dependencies:
