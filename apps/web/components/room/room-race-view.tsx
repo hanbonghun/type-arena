@@ -27,7 +27,7 @@ export function RoomRaceView({
   selfWpm,
   selfAccuracy,
 }: RoomRaceViewProps) {
-  const opponents = players.filter((p) => p.participantId !== myId);
+  const opponents = players.filter((p) => p.participantId !== myId).slice(0, 3);
 
   return (
     <main className="flex items-start justify-center min-h-screen px-4 py-8 gap-4">
