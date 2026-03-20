@@ -328,7 +328,7 @@ model PromptCatalog {
   language       String  @default("en")
   text           String
   normalizedText String
-  checksum       String
+  checksum       String  @unique
   difficulty     String  @default("standard")
   active         Boolean @default(true)
   createdAt      DateTime @default(now())
@@ -360,7 +360,7 @@ model Match {
   mode                 String    // ranked, private, practice
   region               String?
   promptId             String
-  state                String    // loading, countdown, racing, completed, aborted, forfeit
+  state                String    // loading, countdown, racing, finish_wait, completed, aborted, forfeit
   serverStartAt        DateTime?
   startedAt            DateTime?
   endedAt              DateTime?
