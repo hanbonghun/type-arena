@@ -20,7 +20,7 @@ export default function PracticePage() {
       try {
         const res = await fetch("/api/v1/practice-matches", { method: "POST" });
         if (!res.ok) throw new Error("프롬프트 로드 실패");
-        const data = await res.json();
+        const data = await res.json() as { promptId: string; text: string; checksum: string };
         init(data.promptId, data.text);
         setLoading(false);
         // 자동으로 카운트다운 시작
