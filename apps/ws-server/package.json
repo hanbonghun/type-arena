@@ -1,0 +1,27 @@
+{
+  "name": "@type-arena/ws-server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/client": "^6",
+    "@type-arena/shared": "workspace:*",
+    "fastify": "^4",
+    "jsonwebtoken": "^9",
+    "ws": "^8",
+    "zod": "^3"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9",
+    "@types/node": "^20",
+    "@types/ws": "^8",
+    "tsx": "^4",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}
