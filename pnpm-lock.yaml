@@ -36,6 +36,18 @@ importers:
       '@type-arena/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
+      '@types/node':
+        specifier: 25.5.0
+        version: 25.5.0
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -60,19 +72,6 @@ importers:
       zustand:
         specifier: ^5
         version: 5.0.12(@types/react@19.2.14)(react@19.2.4)
-    devDependencies:
-      '@types/jsonwebtoken':
-        specifier: ^9.0.10
-        version: 9.0.10
-      '@types/node':
-        specifier: 25.5.0
-        version: 25.5.0
-      '@types/react':
-        specifier: ^19
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19
-        version: 19.2.3(@types/react@19.2.14)
 
   apps/ws-server:
     dependencies:

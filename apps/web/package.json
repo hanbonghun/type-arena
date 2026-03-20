@@ -11,6 +11,10 @@
     "@prisma/client": "^6",
     "@tailwindcss/postcss": "^4",
     "@type-arena/shared": "workspace:*",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "25.5.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "jsonwebtoken": "^9.0.3",
     "next": "^15",
     "next-auth": "5.0.0-beta.30",
@@ -19,11 +23,5 @@
     "tailwindcss": "^4",
     "typescript": "^5.7",
     "zustand": "^5"
-  },
-  "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "25.5.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19"
   }
 }
