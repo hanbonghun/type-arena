@@ -2,7 +2,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 const GUEST_SESSION_KEY = "type_arena_guest";
@@ -74,8 +74,14 @@ export default function HomePage() {
           Beta
         </span>
         {user && (
-          <p className="mt-3 text-gray-400 text-sm">
+          <p className="mt-3 text-gray-400 text-sm flex items-center gap-2 justify-center">
             Welcome back, <span className="text-white font-semibold">{user.name}</span>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-xs text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
+            >
+              Sign out
+            </button>
           </p>
         )}
       </div>

@@ -4,10 +4,10 @@ import { useEffect } from "react";
 import { useRaceStore } from "@/lib/stores/race-store";
 
 export function TypingInput() {
-  const { phase, handleKeyPress } = useRaceStore();
+  const { phase, handleKeyPress, startRacing } = useRaceStore();
 
   useEffect(() => {
-    if (phase !== "racing") return;
+    if (phase !== "racing" && phase !== "idle") return;
 
     function onKeyDown(e: KeyboardEvent) {
       // 붙여넣기 차단 (기능정의서 5.2절)
@@ -19,11 +19,17 @@ export function TypingInput() {
       const value = kind === "type" ? e.key : undefined;
       if (kind === "type" && value?.length !== 1) return;
       e.preventDefault();
+
+      // idle 상태에서 첫 키 입력 시 레이스 시작
+      if (phase === "idle") {
+        startRacing();
+      }
       handleKeyPress(e.key);
     }
 
     // IME 조합 완료 시 (한글 등) — 오타 피드백을 위해 처리
     function onCompositionEnd(e: CompositionEvent) {
+      if (phase === "idle") startRacing();
       for (const char of e.data) {
         handleKeyPress(char);
       }

@@ -84,6 +84,11 @@ export default function RoomPage() {
     if (phase === "countdown" && serverStartAt) {
       startCountdown();
       const remaining = serverStartAt - Date.now();
+      // remaining <= 0이면 즉시 startRacing (GO! 화면 stuck 방지)
+      if (remaining <= 0) {
+        startRacing();
+        return;
+      }
       const timer = setTimeout(() => startRacing(), remaining);
       return () => clearTimeout(timer);
     }

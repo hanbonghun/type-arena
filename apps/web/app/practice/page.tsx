@@ -11,7 +11,7 @@ import { LiveStats } from "@/components/race/live-stats";
 
 export default function PracticePage() {
   const router = useRouter();
-  const { phase, init, startCountdown } = useRaceStore();
+  const { phase, init } = useRaceStore();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,15 +23,13 @@ export default function PracticePage() {
         const data = await res.json() as { promptId: string; text: string; checksum: string };
         init(data.promptId, data.text);
         setLoading(false);
-        // 자동으로 카운트다운 시작
-        startCountdown();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unknown error");
         setLoading(false);
       }
     }
     loadPrompt();
-  }, [init, startCountdown]);
+  }, [init]);
 
   // 경기 완료 시 결과 페이지로 이동
   useEffect(() => {
@@ -77,7 +75,7 @@ export default function PracticePage() {
       </div>
 
       <p className="text-gray-600 text-sm mt-4">
-        {phase === "racing" ? "Start typing..." : "Get ready..."}
+        {phase === "racing" ? "Start typing..." : "Press any key to start"}
       </p>
     </main>
   );
