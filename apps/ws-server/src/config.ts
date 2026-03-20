@@ -10,7 +10,7 @@ function required(key: string): string {
 }
 
 export const config = {
-  WS_PORT: parseInt(process.env.WS_PORT ?? "8081", 10),
+  WS_PORT: parseInt(process.env.PORT ?? process.env.WS_PORT ?? "8081", 10),
   CORS_ORIGIN: process.env.WS_CORS_ORIGIN ?? "http://localhost:3000",
   WS_JWT_SECRET: required("WS_JWT_SECRET"),
   DATABASE_URL: required("DATABASE_URL"),
