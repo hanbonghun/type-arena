@@ -11,6 +11,7 @@
     "db:studio": "pnpm --filter @type-arena/web exec prisma studio"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "turbo": "^2",
     "typescript": "^5.7"
   },
@@ -21,5 +22,8 @@
   "dependencies": {
     "@prisma/client": "^6.19.2",
     "prisma": "^6.19.2"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
