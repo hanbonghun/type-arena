@@ -1,7 +1,4 @@
 // apps/ws-server/src/index.ts
-import { config as dotenvConfig } from "dotenv";
-import { resolve } from "path";
-dotenvConfig({ path: resolve(__dirname, "../../../.env") });
 import Fastify from "fastify";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
