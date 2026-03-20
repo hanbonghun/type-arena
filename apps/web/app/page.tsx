@@ -94,6 +94,15 @@ export default function HomePage() {
           Create Room
         </Button>
 
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={() => router.push("/practice")}
+          disabled={isLoading}
+        >
+          Practice
+        </Button>
+
         {!user && (
           <Button variant="secondary" className="w-full" onClick={() => signIn("google")}>
             Sign in with Google
