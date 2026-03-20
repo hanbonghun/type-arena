@@ -1,10 +1,68 @@
 // apps/web/app/page.tsx
-import Link from "next/link";
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
 
-export default async function HomePage() {
-  const session = await auth();
+const GUEST_SESSION_KEY = "type_arena_guest";
+
+interface GuestSession {
+  id: string;
+  nickname: string;
+  token: string;
+  expiresAt: string;
+}
+
+function getStoredGuest(): GuestSession | null {
+  try {
+    const raw = localStorage.getItem(GUEST_SESSION_KEY);
+    if (!raw) return null;
+    const g = JSON.parse(raw) as GuestSession;
+    if (new Date(g.expiresAt) < new Date()) {
+      localStorage.removeItem(GUEST_SESSION_KEY);
+      return null;
+    }
+    return g;
+  } catch {
+    return null;
+  }
+}
+
+export default function HomePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handlePlayNow() {
+    setLoading(true);
+    try {
+      // 로그인된 유저는 바로 ranked로
+      if (session?.user) {
+        router.push("/ranked");
+        return;
+      }
+
+      // 기존 유효한 게스트 세션 재사용
+      const existing = getStoredGuest();
+      if (existing) {
+        router.push("/ranked");
+        return;
+      }
+
+      // 새 게스트 세션 생성
+      const res = await fetch("/api/v1/guest-sessions", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to create guest session");
+      const guest = await res.json() as GuestSession;
+      localStorage.setItem(GUEST_SESSION_KEY, JSON.stringify(guest));
+      router.push("/ranked");
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+    }
+  }
+
+  const isLoading = status === "loading" || loading;
   const user = session?.user;
 
   return (
@@ -13,7 +71,7 @@ export default async function HomePage() {
         <h1 className="text-5xl font-bold tracking-tight mb-2">Type Arena</h1>
         <p className="text-gray-400 text-lg">Competitive typing. Pure speed.</p>
         <span className="inline-block mt-2 px-3 py-1 text-xs bg-yellow-900/50 text-yellow-400 rounded-full">
-          Closed Beta
+          Beta
         </span>
         {user && (
           <p className="mt-3 text-gray-400 text-sm">
@@ -23,20 +81,22 @@ export default async function HomePage() {
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Link href="/practice">
-          <Button className="w-full text-lg py-4">Practice as Guest</Button>
-        </Link>
+        <Button
+          className="w-full text-lg py-6"
+          onClick={handlePlayNow}
+          disabled={isLoading}
+        >
+          {isLoading ? "Loading..." : "Play Now"}
+        </Button>
 
-        {user ? (
-          <Link href="/ranked">
-            <Button variant="secondary" className="w-full">Ranked</Button>
-          </Link>
-        ) : (
-          <Link href="/auth">
-            <Button variant="secondary" className="w-full">
-              Ranked <span className="text-gray-500 text-xs ml-1">(Sign in)</span>
-            </Button>
-          </Link>
+        {!user && (
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={() => signIn("google")}
+          >
+            Sign in with Google
+          </Button>
         )}
 
         <Button variant="secondary" disabled className="w-full" title="Coming soon">

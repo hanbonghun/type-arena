@@ -1,6 +1,7 @@
 // apps/web/app/api/v1/guest-sessions/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import jwt from "jsonwebtoken";
 
 const ADJECTIVES = ["Swift", "Bold", "Keen", "Bright", "Quick", "Sharp", "Cool", "Fast"];
 const NOUNS = ["Typist", "Racer", "Runner", "Dasher", "Writer", "Coder", "Player", "Striker"];
@@ -21,10 +22,16 @@ export async function POST() {
     },
   });
 
-  // TODO(Phase 2): JWT 토큰 생성하여 WS 서버 인증에 사용
+  const token = jwt.sign(
+    { sub: session.id, type: "guest", nickname: session.nickname },
+    process.env.WS_JWT_SECRET!,
+    { expiresIn: "24h" }
+  );
+
   return NextResponse.json({
     id: session.id,
     nickname: session.nickname,
+    token,
     expiresAt: session.expiresAt.toISOString(),
   });
 }
