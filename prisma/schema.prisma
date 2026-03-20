@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserAccount {
+  id          String   @id @default(cuid())
+  googleSub   String?  @unique
+  displayName String
+  email       String?  @unique
+  status      String   @default("active")
+  betaAccess  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_account")
+}
+
+model GuestSession {
+  id              String   @id @default(cuid())
+  nickname        String
+  fingerprintHash String?
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("guest_session")
+}
+
+model BetaInvite {
+  code      String    @id
+  status    String    @default("active")
+  maxUses   Int       @default(1)
+  usedCount Int       @default(0)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("beta_invite")
+}
+
+model PromptCatalog {
+  id             String   @id @default(cuid())
+  language       String   @default("en")
+  text           String
+  normalizedText String
+  checksum       String   @unique
+  difficulty     String   @default("standard")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@map("prompt_catalog")
+}
+
+model PrivateRoom {
+  id         String   @id @default(cuid())
+  inviteCode String   @unique
+  status     String   @default("open")
+  hostUserId String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  @@map("private_room")
+}
+
+model RoomParticipant {
+  id              String   @id @default(cuid())
+  roomId          String
+  participantType String
+  participantId   String
+  slot            Int
+  readyState      Boolean  @default(false)
+  joinedAt        DateTime @default(now())
+
+  @@unique([roomId, slot])
+  @@map("room_participant")
+}
+
+model Match {
+  id                  String    @id @default(cuid())
+  mode                String
+  region              String?
+  promptId            String
+  state               String
+  serverStartAt       DateTime?
+  startedAt           DateTime?
+  endedAt             DateTime?
+  winnerParticipantId String?
+  outcomeType         String?
+  createdAt           DateTime  @default(now())
+
+  @@map("match")
+}
+
+model MatchParticipant {
+  id              String  @id @default(cuid())
+  matchId         String
+  participantType String
+  participantId   String
+  slot            Int
+  finishMs        Int?
+  correctChars    Int     @default(0)
+  totalKeystrokes Int     @default(0)
+  accuracy        Float?
+  wpm             Float?
+  ratingBefore    Int?
+  ratingAfter     Int?
+  forfeitReason   String?
+
+  @@unique([matchId, slot])
+  @@map("match_participant")
+}
+
+model MatchEventLog {
+  id             String   @id @default(cuid())
+  matchId        String   @unique
+  timeline       Json
+  rejectedInputs Json?
+  createdAt      DateTime @default(now())
+
+  @@map("match_event_log")
+}
+
+model SeasonRating {
+  id          String  @id @default(cuid())
+  seasonId    String
+  userId      String
+  rs          Int     @default(1000)
+  rankedGames Int     @default(0)
+  wins        Int     @default(0)
+  losses      Int     @default(0)
+  draws       Int     @default(0)
+  provisional Boolean @default(true)
+
+  @@unique([seasonId, userId])
+  @@map("season_rating")
+}
+
+model Season {
+  id        String    @id @default(cuid())
+  name      String
+  status    String    @default("active")
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+
+  @@index([status])
+  @@map("season")
+}
+
+model AbuseReport {
+  id         String   @id @default(cuid())
+  matchId    String
+  reporterId String
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@map("abuse_report")
+}
