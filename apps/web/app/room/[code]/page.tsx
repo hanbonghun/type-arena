@@ -183,16 +183,16 @@ export default function RoomPage() {
     );
   }
 
-  if ((phase === "racing" || (phase === "countdown" && racePhase === "racing")) && promptText) {
+  if ((phase === "racing" || (phase === "countdown" && (racePhase === "racing" || racePhase === "finished"))) && promptText) {
     return (
       <div ref={containerRef} tabIndex={-1} className="outline-none relative">
         {retireAt && (
-          <div className="fixed inset-0 flex flex-col items-center justify-end pb-16 pointer-events-none z-40">
-            <div className="bg-gray-950/70 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-8 py-4 text-center">
-              <p className="text-gray-300 text-sm mb-1">1st place finished!</p>
-              <p className="text-white font-bold text-2xl">
-                Game ends in{" "}
-                <span className="text-indigo-400">{retireCountdown}s</span>
+          <div className="fixed top-0 inset-x-0 flex items-center justify-center pt-4 pointer-events-none z-40">
+            <div className="bg-gray-950/60 backdrop-blur-md border border-indigo-500/30 rounded-2xl px-10 py-3 text-center shadow-lg shadow-indigo-900/20">
+              <p className="text-indigo-300 text-xs font-medium tracking-widest uppercase mb-0.5">1st Place Finished</p>
+              <p className="text-white font-bold text-3xl tabular-nums">
+                {retireCountdown}
+                <span className="text-indigo-400 text-lg font-normal ml-1">s</span>
               </p>
             </div>
           </div>
