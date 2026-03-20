@@ -77,7 +77,8 @@ export default function RoomPage() {
     if (promptText && roomId) init(roomId, promptText);
   }, [promptText, roomId, init]);
 
-  // 카운트다운
+  // 카운트다운 (startCountdown/startRacing은 Zustand 액션으로 참조 안정)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (phase === "countdown" && serverStartAt) {
       startCountdown();
@@ -157,13 +158,6 @@ export default function RoomPage() {
   if (phase === "racing" || (phase === "countdown" && racePhase === "racing")) {
     return (
       <div ref={containerRef} tabIndex={-1} className="outline-none">
-        {phase === "countdown" && racePhase !== "racing" && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-950/80 z-50">
-            <span className="text-8xl font-bold text-indigo-400 animate-pulse">
-              {countdown > 0 ? countdown : "GO!"}
-            </span>
-          </div>
-        )}
         <RoomRaceView
           myId={myId ?? ""}
           promptText={promptText}
