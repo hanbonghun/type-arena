@@ -107,8 +107,20 @@ export default function RoomPage() {
       sendInput(seqRef.current, kind, value);
       handleKeyPress(e.key);
     }
+    // IME 조합 완료 시 (한글 등) — 오타 피드백을 위해 처리
+    function onCompositionEnd(e: CompositionEvent) {
+      for (const char of e.data) {
+        seqRef.current += 1;
+        sendInput(seqRef.current, "type", char);
+        handleKeyPress(char);
+      }
+    }
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("compositionend", onCompositionEnd);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("compositionend", onCompositionEnd);
+    };
   }, [racePhase, sendInput, handleKeyPress]);
 
   const isHost = myId === hostId;

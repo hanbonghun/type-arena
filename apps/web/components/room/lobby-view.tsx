@@ -1,5 +1,6 @@
 // apps/web/components/room/lobby-view.tsx
 "use client";
+import { useState } from "react";
 import { RoomPlayerPublic } from "@type-arena/shared";
 import { Button } from "@/components/ui/button";
 
@@ -29,8 +30,13 @@ export function LobbyView({
       ? `${window.location.origin}/room/${roomCode}`
       : "";
 
+  const [copied, setCopied] = useState(false);
+
   function copyLink() {
-    navigator.clipboard.writeText(roomUrl);
+    navigator.clipboard.writeText(roomUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   }
 
   return (
@@ -41,8 +47,12 @@ export function LobbyView({
           <span className="text-2xl font-mono font-bold tracking-widest text-indigo-400">
             {roomCode}
           </span>
-          <Button variant="secondary" className="text-xs px-3 py-1 h-auto" onClick={copyLink}>
-            Copy Link
+          <Button
+            variant="secondary"
+            className={`text-xs px-3 py-1 h-auto transition-colors ${copied ? "text-green-400 border-green-500/50" : ""}`}
+            onClick={copyLink}
+          >
+            {copied ? "Copied!" : "Copy Link"}
           </Button>
         </div>
         <p className="text-gray-500 text-sm mt-1">Share this code with friends</p>
