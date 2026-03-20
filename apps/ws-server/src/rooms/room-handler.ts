@@ -17,6 +17,7 @@ import {
   getRoomPlayerPublics,
   RoomPlayer,
 } from "./room-manager";
+import { broadcastToAll } from "./room-manager";
 import { createJudgeState } from "../engine/input-judge";
 import { startRoomCountdown } from "./room-race";
 import { prisma } from "../services/db";
@@ -85,11 +86,10 @@ export async function handleRoomJoin(
     sendError(conn.ws, "ROOM_NOT_FOUND", "Room not found", false);
     return;
   }
-  if (room.phase !== "lobby") {
-    sendError(conn.ws, "ROOM_STARTED", "Room already started", false);
-    return;
-  }
-  if (room.players.size >= 4) {
+
+  // capacity: max 4 total (active + waiting)
+  const totalPlayers = room.players.size + room.waitingPlayers.size;
+  if (totalPlayers >= 4) {
     sendError(conn.ws, "ROOM_FULL", "Room is full (max 4 players)", false);
     return;
   }
@@ -107,6 +107,33 @@ export async function handleRoomJoin(
     judgeState: createJudgeState(),
     lastSeq: -1,
   };
+
+  // 게임 진행 중 (countdown/racing/finished) → 대기열에 추가
+  if (room.phase !== "lobby") {
+    room.waitingPlayers.set(conn.participantId, newPlayer);
+    conn.roomId = room.id;
+
+    sendRaw(conn.ws, {
+      type: "room.joined",
+      roomId: room.id,
+      roomCode: room.code,
+      promptText: room.promptText,
+      hostId: room.hostId,
+      myParticipantId: conn.participantId,
+      players: getRoomPlayerPublics(room),
+      isWaiting: true,
+    });
+
+    // 기존 플레이어에게 대기자 추가 알림
+    broadcastToAll(room, {
+      type: "room.state",
+      roomId: room.id,
+      phase: room.phase,
+      hostId: room.hostId,
+      players: getRoomPlayerPublics(room),
+    });
+    return;
+  }
 
   room.players.set(conn.participantId, newPlayer);
   conn.roomId = room.id;
@@ -142,6 +169,12 @@ export function handleRoomReady(
 
   player.ready = !player.ready;
   broadcastRoomState(room);
+
+  // 모든 플레이어가 레디 상태이고 2명 이상이면 자동 시작
+  const activePlayers = Array.from(room.players.values());
+  if (activePlayers.length >= 2 && activePlayers.every((p) => p.ready)) {
+    startRoomCountdown(room);
+  }
 }
 
 export function handleRoomStart(

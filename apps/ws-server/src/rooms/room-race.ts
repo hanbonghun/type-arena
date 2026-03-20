@@ -10,12 +10,15 @@ import { Connection } from "../types";
 import { sendError } from "../utils";
 import {
   Room,
+  RoomPlayer,
   getRoom,
   deleteRoom,
   broadcastToRoom,
+  broadcastToAll,
   getRoomPlayerPublics,
 } from "./room-manager";
-import { applyInput } from "../engine/input-judge";
+import { applyInput, createJudgeState } from "../engine/input-judge";
+import { prisma } from "../services/db";
 
 export function startRoomCountdown(room: Room): void {
   room.phase = "countdown";
@@ -76,8 +79,8 @@ export function handleRoomInput(
     player.judgeState.correctChars + player.judgeState.incorrectKeystrokes;
   player.accuracy = total > 0 ? (player.judgeState.correctChars / total) * 100 : 100;
 
-  // 진행도 전체 브로드캐스트
-  broadcastToRoom(room, {
+  // 진행도 전체 브로드캐스트 (대기자 포함 — 관전 가능)
+  broadcastToAll(room, {
     type: "room.progress",
     roomId: room.id,
     players: Array.from(room.players.values()).map((p) => ({
@@ -110,7 +113,7 @@ function startRetireCountdown(room: Room): void {
   if (room.raceTimer) clearTimeout(room.raceTimer);
 
   const retireAt = Date.now() + RETIRE_MS;
-  broadcastToRoom(room, {
+  broadcastToAll(room, {
     type: "room.retiring",
     roomId: room.id,
     retireAt,
@@ -128,6 +131,19 @@ export function handleRoomDisconnect(conn: Connection): void {
 
   conn.roomId = null;
 
+  // 대기 중인 플레이어 퇴장
+  if (room.waitingPlayers.has(conn.participantId)) {
+    room.waitingPlayers.delete(conn.participantId);
+    broadcastToAll(room, {
+      type: "room.state",
+      roomId: room.id,
+      phase: room.phase,
+      hostId: room.hostId,
+      players: getRoomPlayerPublics(room),
+    });
+    return;
+  }
+
   if (room.phase === "lobby") {
     room.players.delete(conn.participantId);
 
@@ -141,7 +157,6 @@ export function handleRoomDisconnect(conn: Connection): void {
       room.hostId = room.players.keys().next().value as string;
     }
 
-    // 상태 브로드캐스트 (room-handler 순환 의존 방지: 직접 인라인)
     broadcastToRoom(room, {
       type: "room.state",
       roomId: room.id,
@@ -172,8 +187,7 @@ function finalizeRoom(room: Room, reason: "completion" | "timeout"): void {
       return b.wpm - a.wpm;
     });
 
-  let nextRank =
-    players.filter((p) => p.rank !== null).length + 1;
+  let nextRank = players.filter((p) => p.rank !== null).length + 1;
   for (const p of nonFinishers) {
     p.rank = nextRank++;
   }
@@ -185,8 +199,7 @@ function finalizeRoom(room: Room, reason: "completion" | "timeout"): void {
       const total = js.correctChars + js.incorrectKeystrokes;
       const wpm =
         elapsedMin > 0 ? js.correctChars / CHARS_PER_WORD / elapsedMin : p.wpm;
-      const accuracy =
-        total > 0 ? (js.correctChars / total) * 100 : 100;
+      const accuracy = total > 0 ? (js.correctChars / total) * 100 : 100;
       return {
         rank: p.rank!,
         participantId: p.participantId,
@@ -198,12 +211,78 @@ function finalizeRoom(room: Room, reason: "completion" | "timeout"): void {
       };
     });
 
-  broadcastToRoom(room, {
+  // 대기자 포함 전체에게 결과 전송
+  broadcastToAll(room, {
     type: "room.finished",
     roomId: room.id,
     rankings,
   });
 
-  // 5분 후 방 삭제
-  setTimeout(() => deleteRoom(room.id), 5 * 60 * 1000);
+  // 8초 후 로비로 리셋 (결과 화면 확인 시간)
+  setTimeout(() => resetRoomToLobby(room).catch(console.error), 8_000);
+}
+
+const RESET_EXPIRY_MS = 10 * 60 * 1000;
+
+async function resetRoomToLobby(room: Room): Promise<void> {
+  // 이미 다른 상태로 바뀐 경우 무시
+  if (room.phase !== "finished") return;
+
+  // 새 프롬프트 가져오기
+  const count = await prisma.promptCatalog.count({ where: { active: true } });
+  if (count === 0) {
+    deleteRoom(room.id);
+    return;
+  }
+  const skip = Math.floor(Math.random() * count);
+  const prompt = await prisma.promptCatalog.findFirst({ where: { active: true }, skip });
+  if (!prompt) {
+    deleteRoom(room.id);
+    return;
+  }
+
+  // 대기자 → 활성 플레이어로 합류
+  const merged = new Map<string, RoomPlayer>();
+  for (const [id, p] of room.players) {
+    merged.set(id, resetPlayerState(p));
+  }
+  for (const [id, p] of room.waitingPlayers) {
+    merged.set(id, resetPlayerState(p));
+  }
+
+  room.players = merged;
+  room.waitingPlayers = new Map();
+  room.phase = "lobby";
+  room.promptId = prompt.id;
+  room.promptText = prompt.normalizedText;
+  room.startedAt = null;
+
+  // 만료 타이머 재설정
+  if (room.expiryTimer) clearTimeout(room.expiryTimer);
+  room.expiryTimer = setTimeout(() => {
+    if (room.phase === "lobby") deleteRoom(room.id);
+  }, RESET_EXPIRY_MS);
+
+  broadcastToRoom(room, {
+    type: "room.reset",
+    roomId: room.id,
+    roomCode: room.code,
+    promptText: room.promptText,
+    hostId: room.hostId,
+    players: getRoomPlayerPublics(room),
+  });
+}
+
+function resetPlayerState(p: RoomPlayer): RoomPlayer {
+  return {
+    ...p,
+    ready: false,
+    progress: 0,
+    wpm: 0,
+    accuracy: 100,
+    rank: null,
+    finishedAt: null,
+    judgeState: createJudgeState(),
+    lastSeq: -1,
+  };
 }

@@ -8,7 +8,7 @@ import {
 } from "@type-arena/shared";
 import { wsClient } from "@/lib/ws-client";
 
-export type RoomPhase = "idle" | "lobby" | "countdown" | "racing" | "finished";
+export type RoomPhase = "idle" | "lobby" | "waiting" | "countdown" | "racing" | "finished";
 
 interface RoomProgressEntry {
   participantId: string;
@@ -72,7 +72,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
         case "room.joined":
           set({
-            phase: "lobby",
+            phase: event.isWaiting ? "waiting" : "lobby",
             roomId: event.roomId,
             roomCode: event.roomCode,
             promptText: event.promptText,
@@ -103,6 +103,19 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
         case "room.finished":
           set({ phase: "finished", rankings: event.rankings, retireAt: null });
+          break;
+
+        case "room.reset":
+          set({
+            phase: "lobby",
+            promptText: event.promptText,
+            hostId: event.hostId,
+            players: event.players,
+            raceProgress: [],
+            rankings: [],
+            serverStartAt: null,
+            retireAt: null,
+          });
           break;
       }
     });

@@ -28,6 +28,7 @@ export interface Room {
   promptId: string;
   promptText: string;
   players: Map<string, RoomPlayer>;
+  waitingPlayers: Map<string, RoomPlayer>; // joined mid-game, play next round
   createdAt: number;
   startedAt: number | null;
   countdownTimer: ReturnType<typeof setTimeout> | null;
@@ -88,6 +89,7 @@ export function createRoom(
     promptId,
     promptText,
     players: new Map([[hostId, hostPlayer]]),
+    waitingPlayers: new Map(),
     createdAt: Date.now(),
     startedAt: null,
     countdownTimer: null,
@@ -133,11 +135,30 @@ export function broadcastToRoom(room: Room, event: ServerEvent): void {
   }
 }
 
+// Broadcasts to both active players and waiting players
+export function broadcastToAll(room: Room, event: ServerEvent): void {
+  const msg = JSON.stringify(event);
+  for (const player of room.players.values()) {
+    if (player.ws.readyState === 1) player.ws.send(msg);
+  }
+  for (const player of room.waitingPlayers.values()) {
+    if (player.ws.readyState === 1) player.ws.send(msg);
+  }
+}
+
 export function getRoomPlayerPublics(room: Room) {
-  return Array.from(room.players.values()).map((p) => ({
+  const active = Array.from(room.players.values()).map((p) => ({
     participantId: p.participantId,
     nickname: p.nickname,
     ready: p.ready,
     isHost: p.participantId === room.hostId,
   }));
+  const waiting = Array.from(room.waitingPlayers.values()).map((p) => ({
+    participantId: p.participantId,
+    nickname: p.nickname,
+    ready: false,
+    isHost: false,
+    isWaiting: true as const,
+  }));
+  return [...active, ...waiting];
 }

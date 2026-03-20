@@ -159,6 +159,7 @@ export interface RoomPlayerPublic {
   nickname: string;
   ready: boolean;
   isHost: boolean;
+  isWaiting?: boolean; // true if waiting for current game to end
 }
 
 export interface RoomRanking {
@@ -186,6 +187,7 @@ export interface RoomJoinedEvent {
   hostId: string;
   myParticipantId: string;
   players: RoomPlayerPublic[];
+  isWaiting?: boolean; // true if joining mid-game
 }
 
 export interface RoomStateEvent {
@@ -225,6 +227,15 @@ export interface RoomFinishedEvent {
   rankings: RoomRanking[];
 }
 
+export interface RoomResetEvent {
+  type: "room.reset";
+  roomId: string;
+  roomCode: string;
+  promptText: string; // new prompt for next game
+  hostId: string;
+  players: RoomPlayerPublic[];
+}
+
 export type ServerEvent =
   | SessionOkEvent
   | QueueStatusEvent
@@ -241,4 +252,5 @@ export type ServerEvent =
   | RoomCountdownEvent
   | RoomProgressEvent
   | RoomRetiringEvent
-  | RoomFinishedEvent;
+  | RoomFinishedEvent
+  | RoomResetEvent;

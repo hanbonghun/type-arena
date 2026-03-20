@@ -18,13 +18,13 @@ export function LobbyView({
   roomCode,
   players,
   myId,
-  isHost,
   onToggleReady,
-  onStart,
   onLeave,
 }: LobbyViewProps) {
-  const allReady = players.length >= 2 && players.every((p) => p.ready);
-  const myPlayer = players.find((p) => p.participantId === myId);
+  const activePlayers = players.filter((p) => !p.isWaiting);
+  const waitingPlayers = players.filter((p) => p.isWaiting);
+  const allReady = activePlayers.length >= 2 && activePlayers.every((p) => p.ready);
+  const myPlayer = activePlayers.find((p) => p.participantId === myId);
   const roomUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/room/${roomCode}`
@@ -59,7 +59,7 @@ export function LobbyView({
       </div>
 
       <div className="w-full max-w-sm space-y-2">
-        {players.map((p) => (
+        {activePlayers.map((p) => (
           <div
             key={p.participantId}
             className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-4 py-3"
@@ -73,32 +73,28 @@ export function LobbyView({
                 {p.participantId === myId && " (You)"}
               </span>
             </div>
-            <span
-              className={`text-sm font-medium ${
-                p.ready ? "text-green-400" : "text-gray-500"
-              }`}
-            >
+            <span className={`text-sm font-medium ${p.ready ? "text-green-400" : "text-gray-500"}`}>
               {p.ready ? "Ready" : "Not Ready"}
             </span>
           </div>
         ))}
 
-        {players.length < 4 && (
+        {activePlayers.length < 4 && waitingPlayers.length === 0 && (
           <div className="flex items-center justify-center bg-gray-900/40 border border-gray-800 border-dashed rounded-xl px-4 py-3">
-            <span className="text-gray-600 text-sm">Waiting for players... ({players.length}/4)</span>
+            <span className="text-gray-600 text-sm">Waiting for players... ({activePlayers.length}/4)</span>
           </div>
         )}
       </div>
+
+      {/* 자동 시작 안내 */}
+      <p className="text-gray-600 text-xs text-center">
+        {allReady ? "Starting..." : "Game starts when all players are ready"}
+      </p>
 
       <div className="flex gap-3">
         <Button onClick={onToggleReady} variant={myPlayer?.ready ? "secondary" : "primary"}>
           {myPlayer?.ready ? "Cancel Ready" : "Ready"}
         </Button>
-        {isHost && (
-          <Button onClick={onStart} disabled={!allReady}>
-            Start Game
-          </Button>
-        )}
         <Button variant="ghost" onClick={onLeave}>
           Leave
         </Button>

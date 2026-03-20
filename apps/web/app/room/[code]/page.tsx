@@ -82,6 +82,7 @@ export default function RoomPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (phase === "countdown" && serverStartAt) {
+      seqRef.current = 0; // 새 게임마다 seq 초기화
       startCountdown();
       const remaining = serverStartAt - Date.now();
       // remaining <= 0이면 즉시 startRacing (GO! 화면 stuck 방지)
@@ -169,6 +170,55 @@ export default function RoomPage() {
     );
   }
 
+  if (phase === "waiting") {
+    const activePlayers = players.filter((p) => !p.isWaiting);
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen gap-6 px-4">
+        <div className="text-center">
+          <p className="text-indigo-400 text-sm font-medium tracking-widest uppercase mb-1">Game in Progress</p>
+          <h1 className="text-2xl font-bold">Waiting to join...</h1>
+          <p className="text-gray-500 text-sm mt-1">You&apos;ll join the next round automatically</p>
+        </div>
+
+        {/* 현재 게임 진행 상황 (관전 모드) */}
+        <div className="w-full max-w-sm space-y-3">
+          {activePlayers.map((p) => {
+            const prog = raceProgress.find((r) => r.participantId === p.participantId);
+            const progress = prog?.progress ?? 0;
+            const wpm = prog?.wpm ?? 0;
+            return (
+              <div key={p.participantId} className="bg-gray-900/60 border border-gray-800 rounded-xl px-4 py-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-white">{p.nickname}</span>
+                  <span className="text-xs text-gray-500">{Math.round(wpm)} WPM</span>
+                </div>
+                <div className="w-full bg-gray-800 rounded-full h-1.5">
+                  <div
+                    className="bg-indigo-500 h-1.5 rounded-full transition-all duration-200"
+                    style={{ width: `${Math.min(progress * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 text-gray-600 text-xs">
+          <span className="font-mono font-bold text-gray-500">{roomCode}</span>
+          <span>·</span>
+          <span>Game ends soon</span>
+        </div>
+
+        <button
+          onClick={() => { reset(); router.push("/"); }}
+          className="text-gray-600 hover:text-gray-400 text-sm underline underline-offset-2 transition-colors"
+        >
+          Leave
+        </button>
+      </main>
+    );
+  }
+
   if (phase === "lobby") {
     return (
       <LobbyView
@@ -214,7 +264,7 @@ export default function RoomPage() {
       <RoomResultView
         rankings={rankings}
         myId={myId ?? ""}
-        onPlayAgain={() => router.push("/room/new")}
+        onNewRoom={() => router.push("/room/new")}
         onLeave={() => { reset(); router.push("/"); }}
       />
     );

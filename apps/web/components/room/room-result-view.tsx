@@ -9,14 +9,17 @@ const RANK_LABELS = ["1st", "2nd", "3rd", "4th"];
 interface RoomResultViewProps {
   rankings: RoomRanking[];
   myId: string;
-  onPlayAgain: () => void;
+  onNewRoom: () => void;
   onLeave: () => void;
 }
 
-export function RoomResultView({ rankings, myId, onPlayAgain, onLeave }: RoomResultViewProps) {
+export function RoomResultView({ rankings, myId, onNewRoom, onLeave }: RoomResultViewProps) {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen gap-8 px-4">
-      <h1 className="text-4xl font-bold">Results</h1>
+      <div className="text-center">
+        <h1 className="text-4xl font-bold">Results</h1>
+        <p className="text-gray-500 text-sm mt-2">Next round starting in a few seconds...</p>
+      </div>
 
       <div className="w-full max-w-md space-y-2">
         {rankings.map((r) => (
@@ -47,8 +50,8 @@ export function RoomResultView({ rankings, myId, onPlayAgain, onLeave }: RoomRes
       </div>
 
       <div className="flex gap-4">
-        <Button onClick={onPlayAgain}>Play Again</Button>
         <Button variant="secondary" onClick={onLeave}>Leave</Button>
+        <Button variant="ghost" onClick={onNewRoom}>New Room</Button>
       </div>
     </main>
   );
