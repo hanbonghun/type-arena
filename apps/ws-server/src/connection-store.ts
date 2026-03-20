@@ -19,6 +19,7 @@ export function createConnection(ws: WebSocket): Connection {
     nickname: null,
     matchId: null,
     matchSlot: null,
+    roomId: null,
     authenticated: false,
   };
   connections.set(conn.connId, conn);

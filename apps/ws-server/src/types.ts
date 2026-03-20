@@ -10,6 +10,7 @@ export interface Connection {
   nickname: string | null;
   matchId: string | null;
   matchSlot: 0 | 1 | null;
+  roomId: string | null;
   authenticated: boolean;
 }
 
