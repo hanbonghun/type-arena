@@ -1,11 +1,11 @@
 // apps/web/app/match/[id]/race/page.tsx
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useMatchStore } from "@/lib/stores/match-store";
 import { PromptDisplay } from "@/components/race/prompt-display";
 import { ProgressBar } from "@/components/race/progress-bar";
-import { OpponentProgress } from "@/components/race/opponent-progress";
+import { OpponentTypingView } from "@/components/race/opponent-typing-view";
 import { useRaceStore } from "@/lib/stores/race-store";
 
 export default function MatchRacePage() {
@@ -16,7 +16,6 @@ export default function MatchRacePage() {
     matchId,
     promptText,
     opponentNickname,
-    selfProgress,
     selfWpm,
     selfAccuracy,
     opponentProgress,
@@ -25,9 +24,10 @@ export default function MatchRacePage() {
     sendInput,
   } = useMatchStore();
 
-  // 로컬 race-store는 프롬프트 표시/커서 추적에만 사용 (optimistic)
-  const { init, handleKeyPress, startRacing, startCountdown } = useRaceStore();
+  // 로컬 race-store: 커서 추적 + 즉각적인 로컬 게이지 업데이트 (optimistic)
+  const { init, handleKeyPress, startRacing, startCountdown, phase: racePhase } = useRaceStore();
   const seqRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // 프롬프트 초기화
   useEffect(() => {
@@ -49,9 +49,16 @@ export default function MatchRacePage() {
     }
   }, [phase, serverStartAt, startCountdown, startRacing]);
 
-  // 키보드 입력 캡처 + WS 전송
+  // 레이스 시작 시 페이지에 포커스 강제 이동 (브라우저 탭/주소창 포커스 방지)
   useEffect(() => {
-    if (phase !== "racing" || !matchId) return;
+    if (racePhase === "racing") {
+      containerRef.current?.focus();
+    }
+  }, [racePhase]);
+
+  // 키보드 입력 캡처 + WS 전송 (race-store phase 기준: 클라이언트 타이머로 전환)
+  useEffect(() => {
+    if (racePhase !== "racing" || !matchId) return;
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.ctrlKey || e.metaKey || e.isComposing) return;
@@ -68,7 +75,7 @@ export default function MatchRacePage() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [phase, matchId, sendInput, handleKeyPress]);
+  }, [racePhase, matchId, sendInput, handleKeyPress]);
 
   // 결과 화면으로 이동
   useEffect(() => {
@@ -86,42 +93,68 @@ export default function MatchRacePage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 gap-6">
-      {phase === "countdown" && serverStartAt && (
+    <main
+      ref={containerRef}
+      tabIndex={-1}
+      className="flex flex-col items-center justify-center min-h-screen px-4 py-8 gap-4 outline-none"
+    >
+      {racePhase !== "racing" && serverStartAt && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-950/80 z-50">
           <CountdownDisplay serverStartAt={serverStartAt} />
         </div>
       )}
 
-      <div className="w-full max-w-3xl space-y-4">
-        {/* 내 진행률 */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>You</span>
-            <span>
-              {Math.round(selfWpm)} WPM · {selfAccuracy.toFixed(1)}%
-            </span>
+      {/* 두 플레이어 나란히 (테트리스 스타일) */}
+      <div className="w-full max-w-6xl flex gap-4 items-start">
+
+        {/* 내 화면 (왼쪽, 크게) */}
+        <div className="flex-1 flex flex-col gap-3">
+          {/* 내 헤더 */}
+          <div className="flex justify-between items-center text-sm text-gray-400">
+            <span className="font-semibold text-indigo-400">You</span>
+            <span>{Math.round(selfWpm)} WPM · {selfAccuracy.toFixed(1)}%</span>
           </div>
+
+          {/* 내 progress bar */}
           <ProgressBar />
+
+          {/* 내 프롬프트 */}
+          <div className="bg-gray-900/60 rounded-xl p-4 border border-gray-800">
+            <PromptDisplay />
+          </div>
         </div>
 
-        {/* 상대 진행률 */}
-        <OpponentProgress
-          progress={opponentProgress}
-          wpm={opponentWpm}
-          nickname={opponentNickname}
-        />
+        {/* 구분선 */}
+        <div className="w-px bg-gray-800 self-stretch mt-8" />
 
-        {/* 프롬프트 */}
-        <PromptDisplay />
+        {/* 상대 화면 (오른쪽, 작게) */}
+        <div className="w-80 flex-shrink-0 flex flex-col gap-3 pt-0">
+          <OpponentTypingView
+            promptText={promptText}
+            progress={opponentProgress}
+            wpm={opponentWpm}
+            nickname={opponentNickname}
+          />
+        </div>
       </div>
     </main>
   );
 }
 
-// 서버 기준 카운트다운 숫자 표시
+// 서버 기준 카운트다운 숫자 표시 (200ms마다 업데이트)
 function CountdownDisplay({ serverStartAt }: { serverStartAt: number }) {
-  const remaining = Math.max(0, Math.ceil((serverStartAt - Date.now()) / 1000));
+  const [remaining, setRemaining] = useState(
+    Math.max(0, Math.ceil((serverStartAt - Date.now()) / 1000))
+  );
+
+  useEffect(() => {
+    const tick = () => {
+      setRemaining(Math.max(0, Math.ceil((serverStartAt - Date.now()) / 1000)));
+    };
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [serverStartAt]);
+
   return (
     <span className="text-8xl font-bold text-indigo-400 animate-pulse">
       {remaining > 0 ? remaining : "GO!"}

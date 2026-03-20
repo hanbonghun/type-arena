@@ -111,6 +111,7 @@ export const useRaceStore = create<RaceState>((set, get) => ({
         cursorPos: newPos,
         correctChars: newCorrect,
         totalKeystrokes: newTotal,
+        progress: calcProgress(newCorrect, state.promptText.length),
         ...(finished
           ? { phase: "finished" as const, finishedAt: Date.now() }
           : {}),

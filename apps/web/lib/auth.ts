@@ -4,10 +4,13 @@ import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 
 const nextAuth = NextAuth({
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      checks: ["state"], // PKCE 비활성화 (NextAuth v5 beta 쿠키 이슈 우회)
     }),
   ],
   session: { strategy: "jwt" },

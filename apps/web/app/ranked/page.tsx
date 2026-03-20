@@ -44,9 +44,9 @@ export default function RankedPage() {
     }
   }, [phase, joinQueue]);
 
-  // 매치 배정 시 race 화면으로 이동
+  // 매치 배정 시 race 화면으로 이동 (loading or countdown — countdown.start가 먼저 올 수 있음)
   useEffect(() => {
-    if (phase === "loading" && matchId) {
+    if (matchId && (phase === "loading" || phase === "countdown" || phase === "racing")) {
       router.push(`/match/${matchId}/race`);
     }
   }, [phase, matchId, router]);
