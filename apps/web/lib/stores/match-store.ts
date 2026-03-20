@@ -96,7 +96,6 @@ export const useMatchStore = create<MatchState>((set, get) => ({
         case "race.progress": {
           const e = event as RaceProgressEvent;
           set({
-            phase: "racing",
             selfProgress: e.selfProgress,
             selfWpm: e.selfWpm,
             selfAccuracy: e.selfAccuracy,
